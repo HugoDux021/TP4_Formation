@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cont-mdb
+  labels:
+    app: cont-mdb          # arbitrary label on deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:        # labels the replica selector should match
+      app: cont-mdb
+  template:
+    metadata:
+      labels:
+        app: cont-mdb      # label for replica selector to match
+    spec:
+      containers:
+      - name: cont-mdb
+        image: formation2/cont-mdb:cont-mdb
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MARIADB_USER
+          value: user
+        - name: MARIADB_PASSWORD
+          value: password
+        - name: MARIADB_ROOT_PASSWORD
+          value: rootpassword
+      - name: cont-python
+        image: formation2/cont-python:cont-python
+        env:
+        - name: API_PASSWORD
+          value: rootpassword
+        - name: API_IPMDB
+          value: cont-mdb
+        - name: API_USER
+          value: root
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cont-mdb
+  name: cont-mdb
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: cont-mdb
+  type: NodePort
